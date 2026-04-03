@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CineSmart AI</title>
+
+    <style>
+        body {
+            background: #0f0f0f;
+            color: white;
+            font-family: Arial;
+            text-align: center;
+        }
+
+        h1 {
+            color: red;
+            margin-bottom: 20px;
+        }
+
+        select, button, textarea {
+            padding: 10px;
+            margin: 10px;
+            border-radius: 5px;
+            border: none;
+        }
+
+        button {
+            background: red;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: darkred;
+            transform: scale(1.05);
+        }
+
+        .movies {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .card {
+            background: #1c1c1c;
+            margin: 15px;
+            padding: 10px;
+            width: 220px;
+            border-radius: 12px;
+            transition: 0.3s;
+        }
+
+        .card:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255,0,0,0.5);
+        }
+
+        .card img {
+            width: 100%;
+            border-radius: 10px;
+        }
+
+        .card h3 {
+            font-size: 16px;
+        }
+
+        .card p {
+            color: gold;
+        }
+
+        textarea {
+            width: 300px;
+            height: 100px;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>🎬 CineSmart AI</h1>
+
+<select id="genre">
+    <option value="">Select Genre</option>
+    <option value="28">Action</option>
+    <option value="35">Comedy</option>
+    <option value="10749">Romance</option>
+    <option value="27">Horror</option>
+</select>
+
+<select id="language">
+    <option value="">Select Language</option>
+    <option value="en">English</option>
+    <option value="hi">Hindi</option>
+</select>
+
+<br>
+
+<button onclick="getMovies()">🔥 Show Movies</button>
+<div id="movies" class="movies"></div>
+
+<hr>
+
+
+<h2>💬 Feedback Before Exit</h2>
+<textarea id="feedback" placeholder="Write your feedback..."></textarea><br>
+<button onclick="submitFeedback()">Submit Feedback</button>
+<p id="fbResult"></p>
+
+<script>
+
+async function getMovies() {
+
+    let genre = document.getElementById("genre").value;
+    let language = document.getElementById("language").value;
+
+    let url = "http://127.0.0.1:5000/movies";
+
+    if (genre || language) {
+        url += "?";
+        if (genre) url += `genre=${genre}&`;
+        if (language) url += `language=${language}`;
+    }
+
+    let container = document.getElementById("movies");
+    container.innerHTML = "<h2>Loading movies 🎬...</h2>";
+
+    try {
+        let res = await fetch(url);
+        let data = await res.json();
+
+        container.innerHTML = "";
+
+        if (data.movies.length === 0) {
+            container.innerHTML = "No movies found 😢";
+            return;
+        }
+
+        data.movies.forEach(movie => {
+            container.innerHTML += `
+                <div class="card">
+                    <img src="${movie.poster}">
+                    <h3>${movie.title}</h3>
+                    <p>⭐ ${movie.rating}</p>
+                </div>
+            `;
+        });
+
+    } catch (error) {
+        container.innerHTML = "Error loading movies ❌";
+    }
+}
+
+async function submitFeedback() {
+    let text = document.getElementById("feedback").value;
+
+    if (!text) {
+        alert("Please write feedback!");
+        return;
+    }
+
+    let res = await fetch("http://127.0.0.1:5000/save-feedback", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({text: text})
+    });
+
+    let data = await res.json();
+
+    alert("Sentiment: " + data.final + " ✅ Saved!");
+
+    location.reload();
+}
+window.onbeforeunload = function () {
+    return "Please give feedback before leaving!";
+};
+
+</script>
+
+</body>
+</html>
